@@ -1,0 +1,12 @@
+## CITATION file for the recoverR package.
+##
+## R reads this file for citation("recoverR"). It is R code returning a bibentry.
+bibentry(
+  bibtype = "Manual",
+  title   = "recoverR: Calibrated Layer Attribution and Spatial Recoverability for Bulk Multi-Omics",
+  author  = person("Lingzhang", "Meng", email = "lzmeng@gxams.org.cn",
+                   role = c("aut", "cre")),
+  year    = "2026",
+  note    = "R package version 0.1.3",
+  url     = "https://github.com/LingzhangMeng/recoverR"
+)

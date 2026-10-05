@@ -1,0 +1,20 @@
+# --- locally generated reading copies -------------------------------------
+# The package ships Markdown; the .docx files are local reading copies produced
+# by pandoc for convenience and are never part of the release.
+*.docx
+
+# --- R build / check artefacts ---------------------------------------------
+*.Rcheck/
+*.tar.gz
+.Rhistory
+.RData
+.Rproj.user/
+inst/doc/
+vignettes/*.html
+
+# --- internal documents, deliberately NOT published -------------------------
+# These two are the package's internal working narrative. They name an unpublished
+# manuscript, internal file paths and programme structure, so they stay in the
+# local workspace and out of the public repository.
+ALGORITHMS.md
+introduction_recoverR.md

@@ -1,0 +1,301 @@
+---
+title: "Does multi-omics integration earn its complexity?"
+subtitle: "A worked introduction to `recoverR`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Does multi-omics integration earn its complexity?}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4,
+                      warning = FALSE, message = FALSE)
+library(recoverR)
+has_glmnet <- requireNamespace("glmnet", quietly = TRUE)
+has_SNF    <- requireNamespace("SNFtool", quietly = TRUE)
+set.seed(1)
+```
+
+## The two questions this package answers
+
+Most multi-omics work reports that adding a layer *helped*, and the evidence is usually one of two
+things: a variance share **inside a fitted model**, or a clustering at **one** parameterisation of
+**one** integration algorithm. Neither tells you whether the extra layer would improve prediction on
+data you have not seen, or whether the apparent gain would survive a different algorithm or a
+different parameterisation.
+
+`recoverR` supplies the missing tests:
+
+1. **Attribution.** How much does each layer contribute to *out-of-sample* performance, and is that
+   contribution distinguishable from a dimension-matched permutation null? `variancePartition`
+   attributes variance to named covariates and `MOFA2` attributes it to latent factors; both are
+   descriptive within a fitted model. `recoverR` decomposes a *predictive* functional instead.
+2. **Recoverability.** Can a bulk profile carry a spatially-defined phenotype at all, and with what
+   calibrated confidence? Reliability layers exist for *spatial* deconvolution output; this asks the
+   inverse question, so a caller is told when the data cannot support the call they asked for.
+
+Everything below runs on small synthetic data, so the vignette is fast. The two real-data calls are
+shown but not evaluated; each is annotated with its measured cost.
+
+## Part 1 — Attribution
+
+### A small, complete example
+
+We build four views that describe 120 samples with different amounts of shared signal. Views `v1` and
+`v2` carry the outcome; `v3` is a noisy copy of `v1`; `v4` is pure noise.
+
+```{r attribution-data}
+make_view <- function(n, p, signal, noise) {
+  base <- matrix(rnorm(n * p), n, p)
+  if (signal) base[, 1] <- signal * y + rnorm(n)
+  base + matrix(rnorm(n * p, sd = noise), n, p)
+}
+y <- rnorm(120)
+X <- list(
+  v1 = make_view(120, 30, signal = 1.0, noise = 1),
+  v2 = make_view(120, 30, signal = 0.6, noise = 1),
+  v3 = make_view(120, 30, signal = 0.0, noise = 1),
+  v4 = make_view(120, 30, signal = 0.0, noise = 1)
+)
+sapply(X, dim)
+```
+
+`attrib_views()` returns the exact Shapley decomposition of out-of-sample performance, a
+dimension-matched permutation null for each view, and leave-one-out / forward ablations.
+
+```{r attribution-run, eval = has_glmnet}
+res <- attrib_views(X, y, family = "gaussian", nfolds = 5L, seed = 1L,
+                    n_perm = 49L, ncores = 2L, verbose = FALSE)
+res
+```
+
+Read the two columns together:
+
+- **`shapley`** is the view's total credit. It is *efficiency*-satisfying: the values sum to
+  `V(full) - V(empty)`.
+- **`unique_contribution`** is `V(full) - V(full \ k)`: what is lost when that view alone is removed.
+
+A view whose Shapley is large while its unique contribution is near zero is earning credit for
+performance **shared** with correlated views. In our example `v3` is deliberately a noisy copy of
+`v1`, so it inherits a real share of `v1`'s credit — which is exactly why a bare variance share
+overstates a redundant layer.
+
+```{r attribution-null, eval = has_glmnet}
+as.data.frame(res$null)[, c("view", "delta_observed", "null_mean", "null_q95", "p_value")]
+```
+
+The null is **dimension-matched by construction**: the permuted view has exactly the same number of
+features as the real one, so no correction for dimensionality is needed. Its hypothesis is precise:
+
+> H0: given the other views, this view carries no sample-specific information about `y`.
+
+Note that a pure-noise view can carry a **non-zero** Shapley value — random columns act like
+noise-injection regularisation. This is why a permutation null is needed rather than a bare R², and
+why "assert p > 0.05 for a noise view" is a bad test: p is uniform under H0, so it fails about 5% of
+the time by design. The stable discriminator is the **gap to the null mean**.
+
+```{r attribution-plate, fig.height = 6, eval = has_glmnet}
+plot_attribution_plate(res)
+```
+
+### What it costs on real data
+
+A real multi-omics call looks like this. The cost depends on the
+learner, and the difference is large enough to change how you design an analysis:
+
+```{r real-calls, eval = FALSE}
+# Four views, 300 features each, binomial endpoint, B = 49 permutations: ~3.5 min on 8 cores.
+res_bin <- attrib_views(X_views, y_response, family = "binomial",
+                        nfolds = 5L, n_perm = 49L, ncores = 8L)
+
+# The SAME call with a Cox endpoint costs ~25 s per cross-validated fit against
+# ~0.8 s for binomial, and the Shapley lattice is SERIAL, so a full-budget
+# B = 199 run is ~2 hours - not ~10 minutes. Budget the estimator to the endpoint.
+res_surv <- attrib_views(X_views, Surv(time, event), family = "survival",
+                         nfolds = 3L, n_perm = 0L, ncores = 8L)
+```
+
+If a view survives the null, `ablate_views()` gives the leave-one-out and forward-selection views of
+the same question, and `plot_leave_one_out()` / `plot_forward_selection()` draw them.
+
+## Part 2 — Recoverability: can a bulk profile carry a spatial phenotype?
+
+A bulk profile is an average. If a tumour is part inflamed and part desert, its average looks
+moderately inflamed — a misleading summary. `recoverR` asks whether the archetype is recoverable at
+all, and **abstains** when it is not.
+
+The predictor sees only the aggregated expression of a region; the label comes from the spatial
+ground truth. Nothing about the label is derived from the feature vector, so the test is not
+circular: it measures precisely what aggregation destroys.
+
+```{r conformal-data}
+n <- 300
+lab <- sample(c("inflamed", "excluded", "desert"), n, replace = TRUE)
+shift <- c(inflamed = 1.2, excluded = -0.2, desert = -1.4)[lab]
+Xr <- matrix(rnorm(n * 40), n, 40)
+Xr[, 1] <- shift + rnorm(n, sd = 0.9)
+Xr[, 2] <- shift + rnorm(n, sd = 1.1)
+# Features must be NAMED: predict_recoverability() matches the calibration and
+# prediction matrices by feature identifier, and an unnamed matrix shares no
+# features with the training set (it reports "fewer than 2 shared features").
+colnames(Xr) <- sprintf("g%02d", seq_len(ncol(Xr)))
+table(lab)
+```
+
+```{r conformal-run}
+fit <- refit_recoverability(Xr, factor(lab), alpha = 0.10, mondrian = TRUE,
+                            score = "aps", cal_prop = 0.5, seed = 1)
+c(calibration_coverage = fit$cal_coverage)
+fit$cal_coverage_by_class
+```
+
+Split conformal prediction carries a finite-sample coverage guarantee: the prediction sets contain
+the true archetype with probability at least `1 - alpha`, and **Mondrian** (class-conditional)
+conformal makes that hold *per class* rather than only on average.
+
+```{r conformal-predict}
+pred <- predict_recoverability(fit, Xr)
+as.data.frame(pred)$predicted[1:6]
+mean(pred$abstain)
+```
+
+Abstention is the point: the method is allowed to say *"this profile cannot support a call"* rather
+than emitting a confident archetype where the data do not warrant one.
+
+```{r separability}
+archetype_separability(fit)
+```
+
+The separability matrix names which archetype **pairs** the data cannot distinguish. In practice
+that matrix, not the overall accuracy, is the actionable output: it says which clinical distinction a
+bulk assay will not deliver.
+
+```{r reliability, fig.height = 5}
+plot_reliability(fit)
+```
+
+```{r coverage-risk, fig.height = 4}
+plot_coverage_risk(fit)
+```
+
+`reliability_curve()` returns an expected calibration error, and `selective_gain()` reports what
+abstention buys you in accuracy at a given coverage — the selective-risk view.
+
+## Part 3 — Sampling adequacy: how much tissue, and how many genes?
+
+Spatial signal collapses below a certain specimen size, and that constraint is usually reported once,
+as an afterthought, for one study. `sampling_adequacy()` turns it into a measured quantity: at what
+region diameter does the archetype stop being recoverable from the aggregate profile?
+
+```{r adequacy, fig.height = 4.5}
+set.seed(2)
+n_spot <- 900
+spots  <- sprintf("spot-%04d", seq_len(n_spot))
+coords <- data.frame(x = rep(seq_len(30), each = 30) * 100,
+                     y = rep(seq_len(30), times = 30) * 100,
+                     barcode = spots, row.names = spots)
+
+# A SMOOTH large-scale spatial field, so that a bigger region captures it more
+# reliably than a small one - which is the saturating relationship the Hill fit
+# expects. (A fine-grained pattern would instead average OUT with region size and
+# the fit would be correctly rejected; see the notes on extrapolations below.)
+field  <- sin(coords$x / 1200) + cos(coords$y / 1500)
+labels <- setNames(ifelse(field > 0, "inflamed", "desert"), spots)
+
+# counts must be SPOTS x GENES, with rownames matched to coords (see ?pseudobulk_regions)
+cnt <- matrix(rpois(n_spot * 200, 5), nrow = n_spot,
+              dimnames = list(spots, paste0("GENE", seq_len(200))))
+cnt[,  1:25] <- cnt[,  1:25] + pmax(0,  field) * 6
+cnt[, 26:50] <- cnt[, 26:50] + pmax(0, -field) * 6
+
+sa <- sampling_adequacy(cnt, coords, labels = labels,
+                        diameters = c(300, 600, 1200, 2400, 3600),
+                        panel_sizes = c(50, 200), n_regions = 40L,
+                        target = 0.95, seed = 1L)
+sa$adequacy[, c("panel_genes", "plateau", "half_saturation_mm", "adequacy_mm", "extrapolated")]
+```
+
+Two things to read carefully:
+
+- **`extrapolated`**. A Hill curve fitted to diameters that never reach its plateau cannot identify
+  its half-saturation, and `d*` then falls *outside* the sampled range — an extrapolation, not a
+  measurement. `recoverR` flags it so you report *"the required diameter exceeds what we measured"*
+  rather than quoting a number.
+- **The diameter is data-derived, not assumed.** Pass `diameters` in the units of your `coords`; the
+  millimetre column in `$adequacy` is inherited from those units, so verify them. (A hard-coded
+  pixel-to-micrometre constant is a classic silent error: the Visium spot *diameter* is 55 µm but the
+  spot *pitch* is 100 µm, and the pixels-per-µm scale is image-dependent.)
+
+```{r sampling-curve, fig.width = 7}
+plot_sampling_curve(sa$surface)
+```
+
+### Reading real Visium data
+
+```{r visium, eval = FALSE}
+# One sample per section. The counts .h5 and the *_spatial.tar.gz are separate
+# downloads and BOTH are required - the archive holds the coordinates.
+v <- read_visium("path/to/visium/sample_dir", sample_id = "GSM0000000")
+
+scores <- recoverR:::score_programmes(v$counts, rr_spatial_programmes())
+sec    <- derive_spatial_archetypes(scores)          # section-level call
+sec$archetype
+
+# regions: pseudo-bulk expression plus the spatial ground truth for each region
+pb <- pseudobulk_regions(t(v$counts), v$coords, diameter = 1500,
+                         n_regions = 300, min_spots = 12, aggregate = "sum", seed = 1)
+```
+
+## Guardrails
+
+`recoverR` wraps the failure modes that are silent rather than loud — the kind that return a
+plausible number instead of an error.
+
+```{r guardrails}
+# NA in a feature matrix is usually a merge artefact, not biology
+tryCatch(assert_no_na(matrix(c(1, NA, 3))), error = function(e) conditionMessage(e))
+
+# a verbal check is not a check: confirm a PDF is genuinely vector, not rasterised
+tmp <- tempfile(fileext = ".pdf")
+grDevices::pdf(tmp); plot(1:10, 1:10); grDevices::dev.off()
+is_vector_pdf(tmp)
+```
+
+| Helper | The silent failure it catches |
+|---|---|
+| `assert_no_na()` | NA introduced by a join, which propagates into every fit |
+| `cv_glmnet_safe()` | `cv.glmnet` silently downgrading `type.measure = "auc"` to `"deviance"` when folds hold <10 observations, so `which.max(cvm)` then maximises *error* |
+| `auc_safe()` | `pROC::roc.test` erroring at AUC = 1 and returning `NA`, which survives BH adjustment unnoticed |
+| `is_vector_pdf()` | ggplot2 rasterising a continuous colourbar legend into a 1-px strip inside a "vector" PDF |
+| `assert_palette_covers()` | a palette that silently drops a factor level, recolouring the wrong group |
+| `safe_cbind()` | duplicate column names from per-layer PCA scores, which make `lm()` return `NA` |
+
+## Publication figures
+
+Every plotting function composes with `ggplot2`, and `save_pub()` writes **both** a vector PDF and a
+JPEG at a journal-specified width, verifying that the PDF really is vector:
+
+```{r figures, eval = has_glmnet}
+plt <- plot_shapley(res)
+out <- file.path(tempdir(), "shapley")
+save_pub(plt, out, width_mm = 183, height_mm = 90)
+basename(list.files(tempdir(), pattern = "^shapley", full.names = TRUE))
+```
+
+## Where to go next
+
+- Every exported function carries a documented mathematical and behavioural description
+  (`?attrib_views`, `?refit_recoverability`, `?sampling_adequacy`): the value functional per endpoint,
+  the Shapley estimator and its efficiency argument, the permutation null, the conformal scores, and
+  the Hill fit with its bound checks.
+- The package's test suite (37 test blocks, 81 expectations) doubles as a set of worked
+  micro-examples, including a synthetic Visium fixture written in the exact 10x layout.
+- **Validation status, stated plainly.** Module 1 (attribution) and the estimator underneath it are
+  regression-tested and were checked against planted signals with a known answer. Module 2's harness is
+  verified by a positive control (it recovers a fully planted, zero-noise signal). What is **not** yet
+  available to anyone, including us, is *independent ground truth* for the recoverability module: that
+  requires spatially defined labels measured independently of the transcriptome (for example multiplex
+  immunofluorescence on clinical material). Until then, read Module 2's real-data output as calibrated
+  **relative to its own labels**, and read its abstention rate as a property of the data and the layer
+  rather than a defect.

@@ -1,0 +1,11 @@
+^ALGORITHMS\.md$
+^ALGORITHMS\.docx$
+^README\.docx$
+^\.Rbuildignore$
+^introduction_recoverR\.md$
+^introduction_recoverR\.docx$
+# the tutorial lives on GitHub (TUTORIAL.md + tutorial/make_tutorial.R). Keeping
+# it out of the tarball keeps R CMD check's "non-standard top-level file" NOTE away.
+^TUTORIAL\.md$
+^tutorial$
+^\.gitignore$

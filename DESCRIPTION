@@ -1,0 +1,64 @@
+Package: recoverR
+Type: Package
+Title: Calibrated Layer Attribution and Spatial Recoverability for Bulk
+    Multi-Omics
+Version: 0.1.3
+Authors@R: person("Lingzhang", "Meng", email = "lzmeng@gxams.org.cn",
+    role = c("aut", "cre"))
+Description: Two questions that existing multi-omics tooling does not answer.
+    First, does adding an omics layer actually improve OUT-OF-SAMPLE prediction
+    of a given endpoint, as opposed to merely explaining variance within a
+    fitted model? 'variancePartition' attributes variance to named covariates
+    and 'MOFA2' attributes variance to latent factors; neither provides a
+    predictive, null-calibrated attribution, and neither reports when an added
+    layer is actively harmful. Second, can a BULK profile carry a
+    spatially-defined phenotype at all, and with what calibrated confidence?
+    Reliability layers now exist for spatial deconvolution output, but no tool
+    asks the inverse question, so users are given confident archetype calls
+    where the underlying data cannot support them. This package supplies
+    exact Shapley decomposition of out-of-sample performance with a
+    dimension-matched permutation null, split and Mondrian conformal prediction
+    with abstention for bulk-to-spatial archetype inference, a sampling-
+    adequacy analysis that turns tissue-extent and panel-size constraints into
+    a design rule, and a validation harness that compares bulk calls against
+    multiplex-immunofluorescence ground truth. Publication figures are produced
+    with every plot written as both a vector PDF and a JPEG.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports:
+    ggplot2 (>= 3.4.0),
+    matrixStats,
+    Matrix,
+    MASS,
+    stats,
+    utils,
+    grDevices
+Suggests:
+    glmnet,
+    pROC,
+    survival,
+    data.table,
+    patchwork,
+    cowplot,
+    ggrepel,
+    ggdist,
+    ggridges,
+    scales,
+    viridis,
+    RColorBrewer,
+    ComplexHeatmap,
+    circlize,
+    systemfonts,
+    jsonlite,
+    rhdf5,
+    svglite,
+    ragg,
+    MOFA2,
+    SNFtool,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.0
