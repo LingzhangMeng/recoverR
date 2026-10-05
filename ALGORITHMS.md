@@ -118,7 +118,7 @@ For all comparable pairs $(i,j)$ where $i$ experienced the event before $j$ was
 censored:
 
 $$
-C = \frac{\text{#}\lbrace (i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace (i,j): \eta_i = \eta_j\rbrace }{\text{#}\lbrace (i,j)\ \text{comparable}\rbrace }
+C = \frac{\lvert\lbrace (i,j) : \eta_i > \eta_j\rbrace \rvert + \tfrac{1}{2}\lvert\lbrace (i,j): \eta_i = \eta_j\rbrace \rvert }{\lvert\lbrace (i,j)\ \text{comparable}\rbrace \rvert}
 $$
 
 with $\eta$ the model's risk score (the linear predictor).
@@ -279,7 +279,7 @@ The null hypothesis is therefore precisely:
 ### 4.3 p-value
 
 $$
-\hat p = \frac{1 + \text{#}\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace }{1 + B_{\text{finite}}}
+\hat p = \frac{1 + \lvert\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace \rvert }{1 + B_{\text{finite}}}
 $$
 
 The $+1$ in numerator and denominator is the standard finite-$B$ correction; it

@@ -68,12 +68,12 @@ $$
 
 $$
 \mathrm{AUC} \ =\ \frac{\sum_{i:\ y_i=1} r_i \ -\ n_1(n_1+1)/2}{n_1 n_0}
-\qquad\text{(binomial; $r_i$ = midrank of $\hat p_i$)}
+\qquad\text{(binomial; } r_i \text{ = midrank of } \hat p_i \text{)}
 $$
 
 $$
-C \ =\ \frac{\text{#}\lbrace (i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace (i,j) : \eta_i = \eta_j\rbrace }{\text{#}\lbrace (i,j)\ \text{comparable}\rbrace }
-\qquad\text{(survival; $\eta$ = risk score)}
+C \ =\ \frac{\lvert\lbrace (i,j) : \eta_i > \eta_j\rbrace \rvert + \tfrac{1}{2}\lvert\lbrace (i,j) : \eta_i = \eta_j\rbrace \rvert }{\lvert\lbrace (i,j)\ \text{comparable}\rbrace \rvert}
+\qquad\text{(survival; } \eta \text{ = risk score)}
 $$
 
 The AUC is computed from **midranks** rather than through `pROC::roc.test()`, which errors at
@@ -111,7 +111,7 @@ X_k^{(\pi)} = P_\pi X_k,
 \qquad
 \Delta_k = \mathcal{V}(V) - \mathcal{V}(V \setminus \lbrace k\rbrace ),
 \qquad
-\hat p = \frac{1 + \text{#}\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace }{1 + B_{\mathrm{finite}}}
+\hat p = \frac{1 + \lvert\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace \rvert }{1 + B_{\mathrm{finite}}}
 $$
 
 Permuting view $k$'s **rows** destroys its sample-to-outcome association while preserving its internal
