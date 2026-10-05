@@ -49,7 +49,7 @@ in **[`ALGORITHMS.md`](ALGORITHMS.md)**; this is the summary.
 ### 1. The value functional — out-of-sample performance of a set of views $S$
 
 $$
-\mathcal{V}(S) \thickspace=\thickspace \mathcal{P}\Big( y,\ \lbrace\thinspace \hat f^{(S)}_{-k}(x_i) \thinspace\rbrace_{i \in F_k,\ k = 1..m} \Big)
+\mathcal{V}(S) \ =\ \mathcal{P}\Big( y,\ \lbrace \ \hat f^{(S)}_{-k}(x_i) \ \rbrace _{i \in F_k,\ k = 1..m} \Big)
 $$
 
 $\hat f^{(S)}_{-k}$ is trained on every fold but $k$, and $\mathcal{P}$ is the **pooled** functional
@@ -62,17 +62,17 @@ standardisation and hyper-parameter selection happens **inside that fold only** 
 $\mathcal{P}$ is one of:
 
 $$
-R^2_{\mathrm{oos}} \thickspace=\thickspace 1 - \frac{\sum_{i \in \text{test}} (y_i - \hat y_i)^2}{\sum_{i \in \text{test}} (y_i - \bar y_{\text{test}})^2}
+R^2_{\mathrm{oos}} \ =\ 1 - \frac{\sum_{i \in \text{test}} (y_i - \hat y_i)^2}{\sum_{i \in \text{test}} (y_i - \bar y_{\text{test}})^2}
 \qquad\text{(Gaussian)}
 $$
 
 $$
-\mathrm{AUC} \thickspace=\thickspace \frac{\sum_{i:\thinspacey_i=1} r_i \thickspace-\thickspace n_1(n_1+1)/2}{n_1 n_0}
+\mathrm{AUC} \ =\ \frac{\sum_{i:\ y_i=1} r_i \ -\ n_1(n_1+1)/2}{n_1 n_0}
 \qquad\text{(binomial; $r_i$ = midrank of $\hat p_i$)}
 $$
 
 $$
-C \thickspace=\thickspace \frac{\text{#}\lbrace(i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace(i,j) : \eta_i = \eta_j\rbrace}{\text{#}\lbrace(i,j)\ \text{comparable}\rbrace}
+C \ =\ \frac{\text{#}\lbrace (i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace (i,j) : \eta_i = \eta_j\rbrace }{\text{#}\lbrace (i,j)\ \text{comparable}\rbrace }
 \qquad\text{(survival; $\eta$ = risk score)}
 $$
 
@@ -85,7 +85,7 @@ propagates silently through any downstream false-discovery adjustment.
 With the views as players and $\mathcal{V}$ as the payoff:
 
 $$
-\phi_k \thickspace=\thickspace \sum_{S \subseteq V \setminus \lbracek\rbrace} \frac{|S|!\thinspace(K - |S| - 1)!}{K!}\thinspace\Big[\mathcal{V}(S \cup \lbracek\rbrace) - \mathcal{V}(S)\Big]
+\phi_k \ =\ \sum_{S \subseteq V \setminus \lbrace k\rbrace } \frac{|S|!\ (K - |S| - 1)!}{K!}\ \Big[\mathcal{V}(S \cup \lbrace k\rbrace ) - \mathcal{V}(S)\Big]
 $$
 
 This is the unique attribution satisfying **efficiency** ($\sum_k \phi_k = \mathcal{V}(V) - \mathcal{V}(\varnothing)$),
@@ -96,9 +96,9 @@ $2^K \times C_{\mathrm{cv}}$; above $K = 6$ the package **stops** rather than ap
 Two derived readouts:
 
 $$
-U_k \thickspace=\thickspace \mathcal{V}(V) - \mathcal{V}(V \setminus \lbracek\rbrace) \quad\text{(the "unique" contribution)},
+U_k \ =\ \mathcal{V}(V) - \mathcal{V}(V \setminus \lbrace k\rbrace ) \quad\text{(the "unique" contribution)},
 \qquad
-\text{forward: } k^{(t)} = \arg\max_{k \notin S_{t-1}}\Big[\mathcal{V}(S_{t-1} \cup \lbracek\rbrace) - \mathcal{V}(S_{t-1})\Big]
+\text{forward: } k^{(t)} = \arg\max_{k \notin S_{t-1}}\Big[\mathcal{V}(S_{t-1} \cup \lbrace k\rbrace ) - \mathcal{V}(S_{t-1})\Big]
 $$
 
 * $U_k \approx 0$ with $\phi_k > 0$: the layer carries information already present elsewhere — **redundant**, not worthless.
@@ -109,9 +109,9 @@ $$
 $$
 X_k^{(\pi)} = P_\pi X_k,
 \qquad
-\Delta_k = \mathcal{V}(V) - \mathcal{V}(V \setminus \lbracek\rbrace),
+\Delta_k = \mathcal{V}(V) - \mathcal{V}(V \setminus \lbrace k\rbrace ),
 \qquad
-\hat p = \frac{1 + \text{#}\lbrace\thinspaceb : \Delta_k^{(b)} \ge \Delta_k \thinspace\rbrace}{1 + B_{\mathrm{finite}}}
+\hat p = \frac{1 + \text{#}\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace }{1 + B_{\mathrm{finite}}}
 $$
 
 Permuting view $k$'s **rows** destroys its sample-to-outcome association while preserving its internal
@@ -134,13 +134,13 @@ prediction set:
 $$
 \hat q = s_{(\lceil (n_c+1)(1-\alpha) \rceil)}, \qquad s_{(n_c+1)} := +\infty,
 \qquad
-C(x) = \lbrace\thinspace y : s(x,y) \le \hat q \thinspace\rbrace
+C(x) = \lbrace \ y : s(x,y) \le \hat q \ \rbrace 
 $$
 
 which yields **exact finite-$n$ coverage** under exchangeability alone (no distributional form):
 
 $$
-\mathbb{P}\big(Y_{n+1} \in C(X_{n+1})\big) \thickspace\ge\thickspace 1 - \alpha
+\mathbb{P}\big(Y_{n+1} \in C(X_{n+1})\big) \ \ge\ 1 - \alpha
 $$
 
 The $\lceil (n_c+1)(1-\alpha)\rceil$ correction is what delivers finiteness — the plain empirical quantile
@@ -151,20 +151,20 @@ separate quantile per archetype $g$ and admitting each candidate label against *
 $$
 \hat q_g = s^{g}_{(\lceil (n_g+1)(1-\alpha) \rceil)},
 \qquad
-\mathbb{P}\big(Y \in C(X) \ \big|\ Y = g\big) \thickspace\ge\thickspace 1-\alpha \quad \forall g
+\mathbb{P}\big(Y \in C(X) \ \big|\ Y = g\big) \ \ge\ 1-\alpha \quad \forall g
 $$
 
 **Abstention is the deliverable**, not a shortcoming:
 
 $$
-\mathrm{abstain}(x) = \mathbb{1}\big[\thinspace|C(x)| > 1\thinspace\big]
+\mathrm{abstain}(x) = \mathbb{1}\big[\ |C(x)| > 1\ \big]
 $$
 
 a *singleton* set is a committed call; a larger set is the method declining to commit. And the actionable
 output is the **confusability** matrix (**high = a bulk profile cannot separate the pair**):
 
 $$
-\Sigma_{ij} = \frac{1}{n_c}\sum_{t=1}^{n_c} \mathbb{1}\big[\lbracei,j\rbrace \subseteq C_t\big],
+\Sigma_{ij} = \frac{1}{n_c}\sum_{t=1}^{n_c} \mathbb{1}\big[\lbrace i,j\rbrace \subseteq C_t\big],
 \qquad i \ne j
 $$
 
@@ -178,16 +178,16 @@ region label being the majority spot label. Performance against diameter is then
 squares with a **Hill** curve:
 
 $$
-P(d) \thickspace=\thickspace P_\infty \thinspace \frac{d^{\thinspaceh}}{K^{\thinspaceh} + d^{\thinspaceh}}
+P(d) \ =\ P_\infty \ \frac{d^{\ h}}{K^{\ h} + d^{\ h}}
 $$
 
 $P_\infty$ is the plateau (asymptotically recoverable signal), $K$ the half-saturation diameter and $h$ the
 cooperativity. A Hill form is used rather than a single exponential because it accommodates a genuine
 **threshold** (large $h$) as well as a gradual rise ($h \approx 1$); a one-parameter exponential forces a
-shape and therefore biases the answer. Solving $P(d^\star) = t\thinspaceP_\infty$:
+shape and therefore biases the answer. Solving $P(d^\star) = t\ P_\infty$:
 
 $$
-d^\star \thickspace=\thickspace K \left(\frac{t}{1-t}\right)^{1/h}
+d^\star \ =\ K \left(\frac{t}{1-t}\right)^{1/h}
 $$
 
 $d^\star$ is the **minimum region diameter** at which the endpoint is recoverable at fraction $t$ (default

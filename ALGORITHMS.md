@@ -68,10 +68,10 @@ failure mode is stated — those are the reasons the choice is not negotiable.
 | $n$ | number of samples (patients) |
 | $K$ | number of omics views (layers) |
 | $X_k \in \mathbb{R}^{n \times p_k}$ | view $k$; rows are samples, aligned across $k$ |
-| $V = \lbrace1,\dots,K\rbrace$ | the full view set |
+| $V = \lbrace 1,\dots,K\rbrace $ | the full view set |
 | $S \subseteq V$ | a subset of views |
-| $X_S = [\thinspaceX_k\thinspace]_{k \in S}$ | column-wise concatenation over $S$ |
-| $y$ | endpoint: $\mathbb{R}^n$ (gaussian), $\lbrace0,1\rbrace^n$ (binomial), or $(\text{time},\text{event})^n$ (survival) |
+| $X_S = [\ X_k\ ]_{k \in S}$ | column-wise concatenation over $S$ |
+| $y$ | endpoint: $\mathbb{R}^n$ (gaussian), $\lbrace 0,1\rbrace ^n$ (binomial), or $(\text{time},\text{event})^n$ (survival) |
 | $\mathcal{V}(S)$ | **out-of-sample** performance of a model trained on $X_S$ |
 | $\hat q$ | conformal quantile (calibration) |
 | $\alpha$ | miscoverage level; coverage target $1-\alpha$ |
@@ -118,7 +118,7 @@ For all comparable pairs $(i,j)$ where $i$ experienced the event before $j$ was
 censored:
 
 $$
-C = \frac{\text{#}\lbrace(i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace(i,j): \eta_i = \eta_j\rbrace}{\text{#}\lbrace(i,j)\ \text{comparable}\rbrace}
+C = \frac{\text{#}\lbrace (i,j) : \eta_i > \eta_j\rbrace + \tfrac{1}{2}\text{#}\lbrace (i,j): \eta_i = \eta_j\rbrace }{\text{#}\lbrace (i,j)\ \text{comparable}\rbrace }
 $$
 
 with $\eta$ the model's risk score (the linear predictor).
@@ -129,11 +129,11 @@ with $\eta$ the model's risk score (the linear predictor).
 
 ### 2.1 Estimator
 
-For a fold assignment $\mathcal{F} = \lbraceF_1,\dots,F_m\rbrace$ (stratified on the
+For a fold assignment $\mathcal{F} = \lbrace F_1,\dots,F_m\rbrace $ (stratified on the
 outcome),
 
 $$
-\mathcal{V}(S) = \mathcal{P}\Big( y,\ \lbrace\thinspace \hat f^{(S)}_{-k}(x_i) \thinspace\rbrace_{i \in F_k,\thinspace k=1..m} \Big)
+\mathcal{V}(S) = \mathcal{P}\Big( y,\ \lbrace \ \hat f^{(S)}_{-k}(x_i) \ \rbrace _{i \in F_k,\ k=1..m} \Big)
 $$
 
 where $\hat f^{(S)}_{-k}$ is trained on $\bigcup_{j \ne k} F_j$ and $\mathcal P$ is
@@ -186,7 +186,7 @@ exists to make the old behaviour impossible to invoke unknowingly.
 ### 3.1 Definition
 
 $$
-\phi_k = \sum_{S \subseteq V \setminus \lbracek\rbrace} \frac{|S|!\thinspace(K-|S|-1)!}{K!}\thinspace\Big[\mathcal{V}(S \cup \lbracek\rbrace) - \mathcal{V}(S)\Big]
+\phi_k = \sum_{S \subseteq V \setminus \lbrace k\rbrace } \frac{|S|!\ (K-|S|-1)!}{K!}\ \Big[\mathcal{V}(S \cup \lbrace k\rbrace ) - \mathcal{V}(S)\Big]
 $$
 
 This is the **exact** Shapley value of the cooperative game
@@ -216,7 +216,7 @@ answers span a factor that frequently exceeds the effect size being reported.
 
 Two derived quantities are reported:
 
-- **Unique contribution** $U_k = \mathcal{V}(V) - \mathcal{V}(V \setminus \lbracek\rbrace)$
+- **Unique contribution** $U_k = \mathcal{V}(V) - \mathcal{V}(V \setminus \lbrace k\rbrace )$
   — the leave-one-out loss, a lower-bound reading of "what this layer buys".
 - **Shapley value** $\phi_k$ — the fair share, which credits a layer for
   performance it shares with others.
@@ -257,7 +257,7 @@ $$
 X_k^{(\pi)} = P_\pi X_k, \qquad P_\pi\ \text{a random permutation matrix}
 $$
 
-The statistic $\Delta_k = \mathcal{V}(V) - \mathcal{V}(V\setminus\lbracek\rbrace)$ is
+The statistic $\Delta_k = \mathcal{V}(V) - \mathcal{V}(V\setminus\lbrace k\rbrace )$ is
 recomputed on $X_k^{(\pi)}$ for $\pi_1,\dots,\pi_B$.
 
 ### 4.2 What this null preserves, and what it destroys
@@ -279,7 +279,7 @@ The null hypothesis is therefore precisely:
 ### 4.3 p-value
 
 $$
-\hat p = \frac{1 + \text{#}\lbrace\thinspace b : \Delta_k^{(b)} \ge \Delta_k \thinspace\rbrace}{1 + B_{\text{finite}}}
+\hat p = \frac{1 + \text{#}\lbrace \ b : \Delta_k^{(b)} \ge \Delta_k \ \rbrace }{1 + B_{\text{finite}}}
 $$
 
 The $+1$ in numerator and denominator is the standard finite-$B$ correction; it
@@ -296,14 +296,14 @@ of harm.
 
 ## 5. Ablation: leave-one-out and forward selection
 
-**Leave-one-out.** $\text{LOO}_k = \mathcal{V}(V) - \mathcal{V}(V\setminus\lbracek\rbrace)$.
+**Leave-one-out.** $\text{LOO}_k = \mathcal{V}(V) - \mathcal{V}(V\setminus\lbrace k\rbrace )$.
 Positive $\Rightarrow$ the layer helps; negative $\Rightarrow$ it harms.
 
 **Forward selection.** Starting from $\varnothing$, repeatedly add the view with
 the largest marginal gain:
 
 $$
-k^{(t)} = \arg\max_{k \notin S_{t-1}} \Big[\mathcal{V}(S_{t-1} \cup \lbracek\rbrace) - \mathcal{V}(S_{t-1})\Big]
+k^{(t)} = \arg\max_{k \notin S_{t-1}} \Big[\mathcal{V}(S_{t-1} \cup \lbrace k\rbrace ) - \mathcal{V}(S_{t-1})\Big]
 $$
 
 Read together with $\phi_k$, the pair separates three distinct situations that a
@@ -334,7 +334,7 @@ $$
 \hat q = s_{(\lceil (n_c+1)(1-\alpha)\rceil)}, \qquad s_{(n_c+1)} := +\infty
 $$
 
-5. Predict the set $C(x) = \lbrace y : s(x,y) \le \hat q \rbrace$.
+5. Predict the set $C(x) = \lbrace y : s(x,y) \le \hat q \rbrace $.
 
 ### 6.3 Nonconformity scores
 
@@ -343,14 +343,14 @@ $$
 $$
 s_{\text{LAC}}(x,y) = 1 - \hat p_y(x)
 \quad\Longrightarrow\quad
-C(x) = \lbrace\thinspace y : \hat p_y(x) \ge 1 - \hat q \thinspace\rbrace
+C(x) = \lbrace \ y : \hat p_y(x) \ge 1 - \hat q \ \rbrace 
 $$
 
 **APS** (adaptive prediction sets) — cumulative mass of labels at least as likely
 as the true one:
 
 $$
-s_{\text{APS}}(x,y) = \sum_{j\thinspace:\thinspace \hat p_j(x) \ \ge\ \hat p_y(x)} \hat p_j(x)
+s_{\text{APS}}(x,y) = \sum_{j\ :\ \hat p_j(x) \ \ge\ \hat p_y(x)} \hat p_j(x)
 \quad\Longrightarrow\quad
 C(x) = \text{smallest top-mass prefix with cumulative} \ \ge \hat q
 $$
@@ -412,7 +412,7 @@ importance weights $w(x) = p_{\text{test}}(x)/p_{\text{cal}}(x)$, replace the
 empirical quantile by the **weighted** quantile:
 
 $$
-\hat q = \min\Big\lbrace q : \frac{\sum_{i:\thinspace s_i \le q} w_i}{\sum_j w_j} \ \ge\ \frac{\lceil (n_c+1)(1-\alpha)\rceil}{n_c+1} \Big\rbrace
+\hat q = \min\Big\lbrace q : \frac{\sum_{i:\ s_i \le q} w_i}{\sum_j w_j} \ \ge\ \frac{\lceil (n_c+1)(1-\alpha)\rceil}{n_c+1} \Big\rbrace 
 $$
 
 This restores approximate validity under the shift, and — importantly — the
@@ -424,7 +424,7 @@ degrades gracefully rather than silently.
 ### 6.7 Abstention rule and the selective-risk view
 
 $$
-\text{abstain}(x) = \mathbb{1}\big[\thinspace|C(x)| > 1\thinspace\big]
+\text{abstain}(x) = \mathbb{1}\big[\ |C(x)| > 1\ \big]
 $$
 
 Coverage alone is not a sufficient readout: a model can hold marginal coverage
@@ -450,7 +450,7 @@ empirical accuracy of the committed subset is reported separately
 Bin calibration points by confidence. For bin $b$ with $n_b$ points:
 
 $$
-\text{ECE} = \sum_b \frac{n_b}{n}\thinspace \big|\thinspace\text{acc}_b - \overline{\text{conf}}_b\thinspace\big|
+\text{ECE} = \sum_b \frac{n_b}{n}\ \big|\ \text{acc}_b - \overline{\text{conf}}_b\ \big|
 $$
 
 Plotted against the identity line: deviation above indicates over-confidence.
@@ -460,7 +460,7 @@ Plotted against the identity line: deviation above indicates over-confidence.
 For archetypes $i \ne j$:
 
 $$
-\Sigma_{ij} = \frac{1}{n_c}\sum_{t=1}^{n_c} \mathbb{1}\big[\lbracei,j\rbrace \subseteq C_t\big]
+\Sigma_{ij} = \frac{1}{n_c}\sum_{t=1}^{n_c} \mathbb{1}\big[\lbrace i,j\rbrace \subseteq C_t\big]
 $$
 
 the fraction of calibration samples whose prediction set contained **both**
@@ -493,7 +493,7 @@ Performance against diameter follows a saturating curve, fitted by nonlinear
 least squares:
 
 $$
-P(d) = P_\infty \frac{d^{\thinspaceh}}{K^{\thinspaceh} + d^{\thinspaceh}}
+P(d) = P_\infty \frac{d^{\ h}}{K^{\ h} + d^{\ h}}
 $$
 
 $P_\infty$ is the plateau (asymptotic recoverable signal), $K$ the
@@ -504,7 +504,7 @@ shape and therefore biases the adequacy estimate.
 
 ### 7.3 Adequacy threshold
 
-Solving $P(d^\star) = t\thinspaceP_\infty$ for target fraction $t$:
+Solving $P(d^\star) = t\ P_\infty$ for target fraction $t$:
 
 $$
 d^\star = K \left(\frac{t}{1-t}\right)^{1/h}
