@@ -60,6 +60,27 @@ by `Rscript tutorial/make_tutorial.R` (deterministic; seeds are listed there).
 
 ![Attribution plate: Shapley shares, leave-one-view-out loss, forward selection](man/figures/tut-02-plate.jpeg)
 
+## Mathematical specification
+
+Every algorithm is specified in full in **[`ALGORITHMS.md`](ALGORITHMS.md)** — the estimator, its
+assumptions, its validity argument and its computational cost, with the failure mode that forced each
+non-negotiable design choice stated where one did. GitHub renders the `$…$` mathematics in that file
+directly.
+
+| § | what it specifies |
+|---|---|
+| 0 | notation |
+| 1 | performance functionals — out-of-sample $R^2$, AUC via the Mann–Whitney form, Harrell's concordance index |
+| 2 | the cross-validated value functional: the estimator, **nested selection**, **why the folds are shared**, and the `type.measure` trap |
+| 3 | the **exact Shapley (LMG) decomposition** of $\mathcal{V}$: definition, why Shapley rather than a variance share, the unique/shared split, and exact-enumeration complexity |
+| 4 | the **dimension-matched permutation null**: construction, what it preserves and what it destroys, and the p-value |
+| 5 | ablation — leave-one-view-out and forward selection |
+| 6 | **split and Mondrian conformal prediction with abstention**: the exchangeability assumption, the algorithm, nonconformity scores, the finite-sample **coverage guarantee**, class-conditional (Mondrian) conformal, weighted conformal under covariate shift, the abstention rule and selective-risk view, reliability/ECE, and **pairwise archetype separability** |
+| 7 | sampling adequacy — pseudo-bulk construction, the **Hill saturation model**, the adequacy threshold, and why the scorer is deliberately simple |
+| 8 | computational summary — the cost of each step |
+| 9 | what these algorithms do **not** claim |
+| 10 | references for the underlying methods |
+
 ## Quick start
 
 ```r

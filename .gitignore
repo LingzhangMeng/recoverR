@@ -12,9 +12,8 @@
 inst/doc/
 vignettes/*.html
 
-# --- internal documents, deliberately NOT published -------------------------
-# These two are the package's internal working narrative. They name an unpublished
-# manuscript, internal file paths and programme structure, so they stay in the
-# local workspace and out of the public repository.
-ALGORITHMS.md
+# --- internal document, deliberately NOT published --------------------------
+# The package's internal working narrative. It names an unpublished manuscript,
+# internal file paths and programme structure, so it stays in the local workspace.
+# (ALGORITHMS.md, the mathematical specification, IS published - it is generic.)
 introduction_recoverR.md
